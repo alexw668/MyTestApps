@@ -23,10 +23,19 @@ o	Merge into a branch
 	git pull origin production         # to get latest from remote
 	git merge master		
 	
-o	Push a branch to server
+o	Push a branch to remote server
 
 	git push origin prodution
 	
+	
+o	Delete a branch from local repo:
+
+	git branch -D production
+	
+	
+o	Delete a brach from a remote server (e.g., delete production branch from GitHub)
+
+	git push origin production		
 	
 	
 Capstrano setting
@@ -35,4 +44,33 @@ set :repository, "git@github.com:vanpelt/rails-app.git"  # Your clone URL
 set :scm, "git"
 set :branch, "production"	(older version: set :branch, "origin/production")
 
-	
+
+
+Using capistrano to deploy from different git branches
+
+you could structure it from the command line where you have a default branch and environment and also you are able to pass parameters to the cap call which could include the environment and the branch to use. This could be a branch that is explicitly passed or you could have a parameter which would indicate current branch as described in the link you listed.
+
+
+
+#call with cap -S env="<env>" branch="<branchname>" deploy
+...
+
+# Prevents error if not parameter passed, assumes that default 'cap deploy' command
+# and should deploy the master branch to the production server
+set(:env, ‘production’) unless exists?(:env)
+set(:branch, ‘master’) unless exists?(:branch)
+
+if !env.nil? && env == "production"
+   role :web, "production_ip_address"
+else   # add more as needed 
+   role :web, "development_ip_address"
+end
+
+if !branch.nil? && branch == "current"
+   set :branch, $1 if `git branch` =~ /\* (\S+)\s/m
+elsif !branch.nil?
+   set :branch, branch
+else   # add more as needed 
+   set :branch, "master"
+end
+...
